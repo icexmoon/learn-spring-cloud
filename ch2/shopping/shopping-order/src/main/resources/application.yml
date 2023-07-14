@@ -1,0 +1,23 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: shopping-order
+  datasource:
+    url: jdbc:mysql://localhost:3306/cloud_order?useSSL=false
+    username: root
+    password: mysql
+    driver-class-name: com.mysql.jdbc.Driver
+mybatis:
+  type-aliases-package: org.example.shopping.order.entity
+  configuration:
+    map-underscore-to-camel-case: true
+logging:
+  level:
+    org.example.shopping.order: debug
+  pattern:
+    dateformat: MM-dd HH:mm:ss:SSS
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8090/eureka
