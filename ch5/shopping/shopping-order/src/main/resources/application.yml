@@ -1,0 +1,27 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: shopping-order
+  datasource:
+    url: jdbc:mysql://localhost:3306/cloud_order?useSSL=false
+    username: root
+    password: mysql
+    driver-class-name: com.mysql.jdbc.Driver
+  cloud:
+    nacos:
+      discovery:
+        cluster-name: HZ # 集群名称
+        server-addr: localhost:8848
+shopping-user: #服务名称
+  ribbon:
+    NFLoadBalancerRuleClassName: com.alibaba.cloud.nacos.ribbon.NacosRule # 负载均衡规则
+mybatis:
+  type-aliases-package: org.example.shopping.order.entity
+  configuration:
+    map-underscore-to-camel-case: true
+logging:
+  level:
+    org.example.shopping.order: debug
+  pattern:
+    dateformat: MM-dd HH:mm:ss:SSS
