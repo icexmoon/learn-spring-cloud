@@ -1,0 +1,23 @@
+server:
+  port: 8081
+spring:
+  datasource:
+    url: jdbc:mysql://mysql:3306/cloud_user?useSSL=false
+    username: root
+    password: mysql
+    driver-class-name: com.mysql.jdbc.Driver
+  cloud:
+    nacos:
+      discovery:
+        cluster-name: HZ
+mybatis:
+  type-aliases-package: org.example.shopping.user.entity
+  configuration:
+    map-underscore-to-camel-case: true
+logging:
+  level:
+    org.example.shopping.user: debug
+  pattern:
+    dateformat: MM-dd HH:mm:ss:SSS
+pattern:
+  common-and-local: in local file
