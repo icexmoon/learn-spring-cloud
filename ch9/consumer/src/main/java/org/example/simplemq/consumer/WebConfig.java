@@ -48,4 +48,9 @@ public class WebConfig {
     Binding binding2(Queue queue2, FanoutExchange fanoutExchange){
         return BindingBuilder.bind(queue2).to(fanoutExchange);
     }
+
+    @Bean
+    public Queue objectQueue(){
+        return new Queue("queue.object");
+    }
 }

@@ -9,6 +9,8 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -77,6 +79,7 @@ public class RabbitMQListeners {
 
     /**
      * 消费中国历史书籍
+     *
      * @param msg
      */
     @RabbitListener(bindings = @QueueBinding(
@@ -84,12 +87,13 @@ public class RabbitMQListeners {
             exchange = @Exchange(value = "exchange.topic", type = ExchangeTypes.TOPIC),
             key = "history.china.#"
     ))
-    void topicMessageConsumer1(String msg){
+    void topicMessageConsumer1(String msg) {
         log.info(String.format("Consumer1 received message[%s].", msg));
     }
 
     /**
      * 消费所有的历史书籍
+     *
      * @param msg
      */
     @RabbitListener(bindings = @QueueBinding(
@@ -97,12 +101,13 @@ public class RabbitMQListeners {
             exchange = @Exchange(value = "exchange.topic", type = ExchangeTypes.TOPIC),
             key = "history.#"
     ))
-    void topicMessageConsumer2(String msg){
+    void topicMessageConsumer2(String msg) {
         log.info(String.format("Consumer2 received message[%s].", msg));
     }
 
     /**
      * 消费所有的古代史书籍
+     *
      * @param msg
      */
     @RabbitListener(bindings = @QueueBinding(
@@ -110,7 +115,12 @@ public class RabbitMQListeners {
             exchange = @Exchange(value = "exchange.topic", type = ExchangeTypes.TOPIC),
             key = "#.archeology"
     ))
-    void topicMessageConsumer3(String msg){
+    void topicMessageConsumer3(String msg) {
         log.info(String.format("Consumer3 received message[%s].", msg));
+    }
+
+    @RabbitListener(queues = "queue.object")
+    public void objectMessageConsumer(Map<String, String> msg) {
+        log.info(String.format("Received message:%s", msg));
     }
 }
