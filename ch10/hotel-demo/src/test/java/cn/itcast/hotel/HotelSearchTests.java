@@ -18,6 +18,13 @@ import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.BucketOrder;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.Stats;
+import org.elasticsearch.search.aggregations.metrics.StatsAggregationBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
@@ -26,6 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -189,17 +197,16 @@ public class HotelSearchTests {
                     continue;
                 }
                 Text[] fragments = highlightField.getFragments();
-                if (fragments == null || fragments.length == 0){
+                if (fragments == null || fragments.length == 0) {
                     //缺少实际的高亮内容，不处理
                     continue;
                 }
                 String highlightContent = fragments[0].toString();
                 //利用反射，将高亮内容替换原始内容
                 Field hotelDocField = null;
-                try{
+                try {
                     hotelDocField = HotelDoc.class.getDeclaredField(fieldName);
-                }
-                catch (NoSuchFieldException e){
+                } catch (NoSuchFieldException e) {
                     //不能和类型中的字段名匹配，不处理
                     continue;
                 }
@@ -207,6 +214,69 @@ public class HotelSearchTests {
                 hotelDocField.set(hotelDoc, highlightContent);
             }
             System.out.println(hotelDoc);
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    void testBrandAgg() {
+        // 准备查询语句
+        SearchRequest request = new SearchRequest("hotel");
+        request.source()
+                .query(QueryBuilders.rangeQuery("price")
+                        .lte(200))
+                .size(0)
+                .aggregation(AggregationBuilders.terms("brandAgg")
+                        .field("brand")
+                        .size(20));
+        SearchResponse searchResponse = restHighLevelClient.search(request, RequestOptions.DEFAULT);
+        // 处理返回值
+        // 获取 aggregations 中的内容
+        Aggregations aggregations = searchResponse.getAggregations();
+        if (aggregations != null) {
+            // 获取查询时定义的聚合结果
+            // 返回的类型与查询时的聚合类型相关
+            Terms brandAgg = aggregations.get("brandAgg");
+            if (brandAgg != null) {
+                // 遍历聚合查询结果并打印
+                List<? extends Terms.Bucket> buckets = brandAgg.getBuckets();
+                buckets.forEach(b -> {
+                    System.out.println(String.format("key:%s, count: %d", b.getKeyAsString(), b.getDocCount()));
+                });
+            }
+        }
+    }
+
+    @Test
+    @SneakyThrows
+    void testScoreAgg() {
+        SearchRequest request = new SearchRequest("hotel");
+        TermsAggregationBuilder brandAgg = AggregationBuilders.terms("brandAgg");
+        request.source().size(0)
+                .aggregation(brandAgg);
+        StatsAggregationBuilder scoreAgg = AggregationBuilders.stats("scoreAgg");
+        brandAgg.field("brand")
+                .size(10)
+                .order(BucketOrder.aggregation("scoreAgg.avg", false))
+                .subAggregation(scoreAgg);
+        scoreAgg.field("score");
+        SearchResponse searchResponse = restHighLevelClient.search(request, RequestOptions.DEFAULT);
+        Aggregations aggregations = searchResponse.getAggregations();
+        if (aggregations != null) {
+            Terms brandTerms = aggregations.get("brandAgg");
+            List<? extends Terms.Bucket> buckets = brandTerms.getBuckets();
+            for (Terms.Bucket bucket : buckets) {
+                System.out.println(String.format("brand: %s, count: %d", bucket.getKeyAsString(), bucket.getDocCount()));
+                Aggregations subAggregations = bucket.getAggregations();
+                if (subAggregations != null) {
+                    Stats scoreStats = subAggregations.get("scoreAgg");
+                    System.out.println(String.format("min: %.2f, max: %.2f, avg: %.2f, sum: %.2f",
+                            scoreStats.getMin(),
+                            scoreStats.getMax(),
+                            scoreStats.getAvg(),
+                            scoreStats.getSum()));
+                }
+            }
         }
     }
 

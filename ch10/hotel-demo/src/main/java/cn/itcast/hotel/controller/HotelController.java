@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -27,8 +30,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class HotelController {
     @Autowired
     private IHotelService hotelService;
+
     @Data
-    public static class ListRequestParams{
+    public static class HotelQueryDTO {
         private String key;
         private Integer page;
         private Integer size;
@@ -42,7 +46,12 @@ public class HotelController {
     }
 
     @PostMapping("/list")
-    public PageResult list(@RequestBody ListRequestParams requestParams){
+    public PageResult list(@RequestBody HotelQueryDTO requestParams) {
         return hotelService.search(requestParams);
+    }
+
+    @PostMapping("/filters")
+    public Map<String, List<String>> filters(@RequestBody HotelQueryDTO requestParams){
+        return hotelService.filters(requestParams);
     }
 }
